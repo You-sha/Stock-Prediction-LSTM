@@ -54,9 +54,9 @@ new_cat = news_new.headline_category.value_counts() # checking the categories le
 # meging stocks and new news
 news_new = news_new.reset_index()
 news_new.drop(['level_0','index'],axis=1,inplace=True)
-news_new.date = stock.date
 
 stock.columns = [i.lower() for i in stock.columns]
+news_new.date = stock.date
 
 final_df = pd.merge(news_new, stock, how = 'left')
 final_df = final_df.dropna()
@@ -67,8 +67,9 @@ final_df['n_dates'] = final_df.date.apply(lambda x: int(x.replace('-','')))
 
 (final_df.publish_date != final_df.n_dates).sum() #good
 
-final_df.drop(['keep','publish_date','n_dates','headline_category','date'],axis=1,inplace=True)
-final_df['dt'] = pd.to_datetime(final_df.date)
+final_df.date = pd.to_datetime(final_df.date)
+final_df.drop(['keep','publish_date','n_dates','headline_category'],axis=1,inplace=True)
 
 # output
+final_df = final_df[['date','headline_text', 'open', 'high', 'low', 'close', 'adj close', 'volume']]
 final_df.to_csv('prepared_data.csv',index=None)
