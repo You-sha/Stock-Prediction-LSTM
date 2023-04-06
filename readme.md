@@ -8,7 +8,13 @@ Predicting **Kanoria Chemicals** stock price using Long Short-Term Memory and Se
 - [ ] Documentation.
 
 ## Data Preparation
-There were 3 million+ datapoints for the news data, and just about 3500+ for the stock data. First, I dropped news data that was from before the company's origin. Then I dropped the data that was from days when the market was closed or the stocks weren't traded. Upon analyzing it, I ascertained that there were multiple news headlines from different papers for each day, including ones useless for this purpose (entertainment, horoscopes, sports, etc.). So I kept only the useful headlines and dropped the rest. Then I randomly selected one headline for each day (since there were still multiple), and finally merged the news and stock data into one dataset.
+There were 3 million+ datapoints for the news data, and just about 3500+ for the stock data. 
+
+Here is what I did in this step:
+* Dropped news data that was from before the company's origin. 
+* Removed the data that was from days when the market was closed or the stocks weren't traded. 
+* There were multiple news headlines from different papers for each day, including ones useless for this purpose (entertainment, horoscopes, sports, etc.). I kept only the useful headlines and dropped the rest.
+* I randomly selected one headline for each day (since there were still multiple), and finally merged the news and stock data into one dataset.
 
 Dataset sample:
 
