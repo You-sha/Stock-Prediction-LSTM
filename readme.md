@@ -16,89 +16,82 @@ Here is what I did in this step:
 * There were multiple news headlines from different papers for each day, including ones useless for this purpose (entertainment, horoscopes, sports, etc.). I kept only the useful headlines and dropped the rest.
 * I randomly selected one headline for each day (since there were still multiple), and finally merged the news and stock data into one dataset.
 
-Dataset sample:
+Final dataset sample:
 
 <div>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>publish_date</th>
-      <th>headline_category</th>
+      <th>date</th>
       <th>headline_text</th>
+      <th>open</th>
+      <th>high</th>
+      <th>low</th>
+      <th>close</th>
+      <th>adj close</th>
+      <th>volume</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th>33110</th>
-      <td>20010928</td>
-      <td>unknown</td>
-      <td>Watch CM sip nimbu pani at roadside stall</td>
+      <th>0</th>
+      <td>2007-01-08</td>
+      <td>ULFA strikes again in Assam; kills nine people</td>
+      <td>28.666666</td>
+      <td>28.666666</td>
+      <td>28.666666</td>
+      <td>28.666666</td>
+      <td>16.249998</td>
+      <td>3600.0</td>
     </tr>
     <tr>
-      <th>33111</th>
-      <td>20010928</td>
-      <td>entertainment.hindi.bollywood</td>
-      <td>Esha Deol: Prospective Queen Bee?!</td>
+      <th>1</th>
+      <td>2007-01-09</td>
+      <td>Marry-and-dump NRIs may face Indian law</td>
+      <td>28.100000</td>
+      <td>28.600000</td>
+      <td>28.000000</td>
+      <td>28.083332</td>
+      <td>15.919325</td>
+      <td>2490.0</td>
     </tr>
     <tr>
-      <th>33112</th>
-      <td>20010928</td>
-      <td>city.mumbai</td>
-      <td>Govt concedes NBA demands; Medha breaks fast</td>
+      <th>2</th>
+      <td>2007-01-10</td>
+      <td>Kalam sets tone for engagement of global Indians</td>
+      <td>27.566666</td>
+      <td>29.033333</td>
+      <td>27.333332</td>
+      <td>27.566666</td>
+      <td>15.626451</td>
+      <td>32694.0</td>
     </tr>
     <tr>
-      <th>33113</th>
-      <td>20010928</td>
-      <td>pune-times</td>
-      <td>Too Much of Somethings</td>
+      <th>3</th>
+      <td>2007-01-11</td>
+      <td>Plan panel may cut SSA budget</td>
+      <td>27.700001</td>
+      <td>28.416666</td>
+      <td>27.666666</td>
+      <td>28.000000</td>
+      <td>15.872088</td>
+      <td>4800.0</td>
     </tr>
     <tr>
-      <th>33114</th>
-      <td>20010928</td>
-      <td>india</td>
-      <td>US should have paid heed to our warnings: PM</td>
-    </tr>
-    <tr>
-      <th>33115</th>
-      <td>20010928</td>
-      <td>city.hyderabad</td>
-      <td>Drive to check sound pollution in cinemas</td>
-    </tr>
-    <tr>
-      <th>33116</th>
-      <td>20010928</td>
-      <td>city.mumbai</td>
-      <td>Handicrafts showcase Indian state of the arts</td>
-    </tr>
-    <tr>
-      <th>33117</th>
-      <td>20010928</td>
-      <td>city.hyderabad</td>
-      <td>Recycling of continues batteries unchecked</td>
-    </tr>
-    <tr>
-      <th>33118</th>
-      <td>20010928</td>
-      <td>lucknow-times</td>
-      <td>Dancing with god's grace</td>
-    </tr>
-    <tr>
-      <th>33119</th>
-      <td>20010928</td>
-      <td>entertainment.hindi.bollywood</td>
-      <td>Sunny Deol: Anil Sharma's favourite!</td>
-    </tr>
-    <tr>
-      <th>33120</th>
-      <td>20010928</td>
-      <td>hyderabad-times</td>
-      <td>Our very own Bridget Joneses</td>
-    </tr>
+      <th>4</th>
+      <td>2007-01-12</td>
+      <td>Bangladesh president resigns as chief advisor</td>
+      <td>28.299999</td>
+      <td>28.600000</td>
+      <td>28.116667</td>
+      <td>28.433332</td>
+      <td>16.117727</td>
+      <td>13122.0</td>
+    </tr> 
   </tbody>
 </table>
+<p>3754 rows × 8 columns</p>
 </div>
-
-
 
 *(In progress)*
