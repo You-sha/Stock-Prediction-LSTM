@@ -72,15 +72,3 @@ final_df['dt'] = pd.to_datetime(final_df.date)
 
 # output
 final_df.to_csv('prepared_data.csv',index=None)
-
-
-
-
-
-
-
-
-
-
-
-
