@@ -42,6 +42,6 @@ sa_df = sa.merge(df, on='date',how='left')
 sa_df.plot.hist(y='compound')
 sa_df.plot.hist(y='volume')
 
-
+sa_df.to_csv('sa_dataset.csv',index=None)
 
 
