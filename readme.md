@@ -5,7 +5,11 @@ Predicting **Kanoria Chemicals** stock price using Long Short-Term Memory and Se
 - [x] Study LSTM, SA and learn their application.
 - [x] Prepare data.
 - [x] Build model and make predictions
-- [ ] Documentation.
+- [x] Documentation.
+
+## Resources
+
+Multi-Variate LSTM model:  https://www.kaggle.com/code/amarsharma768/stock-price-prediction-using-lstm/notebook
 
 ## Data Preparation
 There were 3 million+ datapoints for the news data, and just about 3500+ for the stock data. 
@@ -129,7 +133,7 @@ Since the data was limited to 30 March 2022 only because of the news headlines d
 
 Since my model also has to use the sentiment scoring that I performed for predictions, I have also made a Random Forest Regressor model. I have evaluated it on 3 fold cv, and have tuned it using RandomizedSearch.
 
-I have used the features `open`, `close`, `low`, `adj close`, 'volume' of the stock data, and 'neg', 'neu', 'pos' from the sentiment scoring as the independent variables and `high` as the target variable.
+I have used the features `open`, `close`, `low`, `adj close`, 'volume' of the stock data, and `neg`, `neu`, `pos` from the sentiment scoring as the independent variables and `high` as the target variable.
 
 - **RMSE**: 30.8
 - **R2 Score**: 0.69
@@ -139,6 +143,14 @@ I have used the features `open`, `close`, `low`, `adj close`, 'volume' of the st
 ![Actual vs Predicted stock price (RF)](https://user-images.githubusercontent.com/123200960/232323527-4b5cc08c-6dc9-430e-8d81-fffa3327173b.png)
 
 - The model's predictions seem to flatline around March-April 2021.
+
+The Random Forest model does not seem to perfrom as well as the LSTM model. That may make sense as I read a scientific article stating that [LSTM is currently one of the best models for stock prediction](https://www.researchgate.net/publication/306925671_Deep_learning_for_stock_prediction_using_numerical_and_textual_information).
+
+Still, it is best to try out different methods and find the best for yourself (as long as you have the time, of course).
+
+## Conclusion
+
+I have made to tools to predict stock price; one that uses time-series data and the LSTM model, and another that uses sentiment scores from news headlines and the stock data with a Random Forest model.
 
 
 
