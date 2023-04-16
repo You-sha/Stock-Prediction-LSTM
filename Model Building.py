@@ -4,6 +4,9 @@ Created on Thu Apr 13 01:54:35 2023
 
 @author: Yousha
 """
+
+# Sorry, this is some of the messiest code I've ever had to write in my life.
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,7 +45,8 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, LSTM
 
 model = Sequential()
-model.add(LSTM(units=50, return_sequences=True, input_shape = (train_seq.shape[1], train_seq.shape[2])))
+model.add(LSTM(units=50, return_sequences=True, input_shape = \
+               (train_seq.shape[1], train_seq.shape[2])))
 
 model.add(Dropout(0.1)) 
 model.add(LSTM(units=50))
@@ -97,16 +101,8 @@ for i in range(-10,0):
   curr_seq = np.append(curr_seq[0][1:],up_pred,axis=0)
   curr_seq = curr_seq.reshape(test_seq[-1:].shape)
 
-upcoming_prediction[upcoming_prediction.columns] = Ms.inverse_transform(upcoming_prediction[upcoming_prediction.columns])
-
-df_LSTM.index == ['2021-04-01']
-
-p=0
-
-for i in list(df_LSTM.index.astype('str')):
-   p += 1
-   if i == '2022-03-31':
-       print(f"{p} is {i}")
+upcoming_prediction[upcoming_prediction.columns] = Ms.inverse_transform(
+    upcoming_prediction[upcoming_prediction.columns])
 
 
 ## Visualizing the upcoming days
@@ -174,7 +170,7 @@ plt.legend()
 plt.xticks(rotation=45)
 plt.xlabel('Date', size=14)
 plt.ylabel('Stock Price', size=14)
-plt.suptitle('Actual vs Predicted High',size=25)
+plt.suptitle('Actual vs Predicted High',size=15)
 plt.savefig('High prediction vs actual.png', dpi=600,bbox_inches='tight')
 plt.show()
 
@@ -205,19 +201,18 @@ r2_score(y_test, rf_pred)
 # Tuning
 from sklearn.model_selection import RandomizedSearchCV
 
-# Number of trees in random forest
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
-# Number of features to consider at every split
+
 max_features = ['auto', 'sqrt']
-# Maximum number of levels in tree
+
 max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
 max_depth.append(None)
-# Minimum number of samples required to split a node
+
 min_samples_split = [2, 5, 10]
-# Minimum number of samples required at each leaf node
+
 min_samples_leaf = [1, 2, 4]
-# Method of selecting samples for training each tree
-bootstrap = [True, False]# Create the random grid
+
+bootstrap = [True, False]
 random_grid = {'n_estimators': n_estimators,
                'max_features': max_features,
                'max_depth': max_depth,
@@ -225,11 +220,7 @@ random_grid = {'n_estimators': n_estimators,
                'min_samples_leaf': min_samples_leaf,
                'bootstrap': bootstrap}
 
-# Use the random grid to search for best hyperparameters
-# First create the base model to tune
 rf = RandomForestRegressor()
-# Random search of parameters, using 3 fold cross validation, 
-# search across 100 different combinations, and use all available cores
 rf_random = RandomizedSearchCV(estimator = rf, param_distributions = random_grid, n_iter = 100, cv = 3, verbose=2, random_state=42, n_jobs = -1)# Fit the random search model
 rf_random.fit(X_train, y_train)
 
@@ -244,8 +235,9 @@ rf = RandomForestRegressor(n_estimators=1000,
 
 rf.fit(X_train,y_train)
 pred = rf.predict(X_test)
+residuals = y_test - pred
 
-np.sqrt(mean_squared_error(y_test, pred)) 
+np.sqrt(mean_squared_error(y_test, pred))
 r2_score(y_test, pred)
 
 rf_df = pd.DataFrame(data=y_test,index=y_test.index)
@@ -263,17 +255,6 @@ plt.xticks(rotation=45)
 plt.title('Actual vs Predicted High price (RF)',size=15)
 plt.legend()
 plt.savefig('Actual vs Predicted 10 stock price (RF).png',dpi=600,bbox_inches='tight')
-plt.show()
-
-
-## Residuals
-plt.figure(figsize=(15,5))
-plt.scatter(y_test, residuals, c=residuals, cmap='magma', edgecolors='black', linewidths=.1)
-plt.colorbar(label="Error", orientation="vertical")
-plt.hlines(y = 0, xmin = 15, xmax= 215, linestyle='--', colors='black')
-plt.xlim(10, 220)
-plt.xlabel('High'); plt.ylabel('Error')
-plt.savefig('RF Residuals.png',dpi=600,bbox_inches='tight')
 plt.show()
 
 
@@ -362,3 +343,91 @@ StockModelLSTM(df_LSTM, needs_scaling=True, dense_layer_lstm=4) # works
 
 
 # Define for RF
+
+def StockModelRF(data, target=None, needs_sa=False, sa_column=None):
+    if needs_sa == True:
+        print("Performing Sentiment scoring.")
+        from nltk.sentiment import SentimentIntensityAnalyzer
+        from tqdm import tqdm
+
+        sia = SentimentIntensityAnalyzer()
+
+        res = {}
+        for i, row in tqdm(data.iterrows(), total=len(data)):
+            text = row[sa_column] 
+            date = row['publish_date'] 
+            res[date] = sia.polarity_scores(text)
+            
+        sa = pd.DataFrame(res).T
+        sa = sa.reset_index()
+        sa = sa.rename(columns={'index':'date'})
+        sa_df = sa.merge(df, on='date',how='left')
+        print("Sentiment scoring completed and added to dataframe.")
+        
+        X = sa_df.drop(target, axis=1)
+        y = sa_df[target].values
+        
+        from sklearn.model_selection import train_test_split
+        
+        X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,shuffle=False)
+        
+        from sklearn.ensemble import RandomForestRegressor
+        rf = RandomForestRegressor( n_estimators=1000,
+                                    min_samples_split=2,
+                                    min_samples_leaf=1,
+                                    max_features='auto',
+                                    max_depth=10,
+                                    bootstrap=False)
+        
+        rf.fit(X_train,y_train)
+        pred = rf.predict(X_test)
+    else:
+        
+        X = df.drop(target, axis=1)
+        y = df[target].values
+        
+        from sklearn.model_selection import train_test_split
+        
+        X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,shuffle=False)
+        
+        from sklearn.ensemble import RandomForestRegressor
+        rf = RandomForestRegressor( n_estimators=1000,
+                                    min_samples_split=2,
+                                    min_samples_leaf=1,
+                                    max_features='auto',
+                                    max_depth=10,
+                                    bootstrap=False)
+        
+        rf.fit(X_train,y_train)
+        pred = rf.predict(X_test)
+    return pred
+    
+news_df = pd.read_csv('news_headlines.csv')
+StockModelRF(df, target='high') # works
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
