@@ -6,12 +6,14 @@ Created on Thu Apr 13 01:54:35 2023
 """
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 df = pd.read_csv('sa_dataset.csv')
 df['date'] = pd.to_datetime(df['date'].apply(lambda x: x.split()[0])).dt.date
 df.set_index('date',drop=True,inplace=True)
 df.drop(['headline_text','compound'], axis=1, inplace=True)
 df_LSTM = df[['open', 'low', 'close', 'high']]
+
 
 from sklearn.preprocessing import MinMaxScaler
 Ms = MinMaxScaler()
@@ -83,11 +85,7 @@ train_prediction_df[['open','low','close','high']] = Ms.inverse_transform(df_LST
 
 new_df = df_LSTM.append(pd.DataFrame(
     columns=df_LSTM.columns,index=pd.date_range(start=df_LSTM.index[-1], \
-                                                     periods=11, freq='D', closed='right'))
-    )
-
-
-
+                                                     periods=11, freq='D', closed='right')))
 upcoming_prediction = pd.DataFrame(columns=['open','low','close','high'],index=new_df.index)
 upcoming_prediction.index=pd.to_datetime(upcoming_prediction.index)
 
@@ -110,8 +108,8 @@ for i in list(df_LSTM.index.astype('str')):
    if i == '2022-03-31':
        print(f"{p} is {i}")
 
-import matplotlib.pyplot as plt
 
+## Visualizing the upcoming days
 plt.figure(figsize=(15,5))
 plt.plot(df.iloc[3714:,4],label='Current High Price', color='blue')
 plt.plot(upcoming_prediction.iloc[3714:,3],label='Upcoming High Price', color='red')
@@ -124,7 +122,6 @@ plt.show()
 
 
 ## Actual Values
-
 actual_upcoming = pd.read_csv('kanoria_stock_next_10.csv')
 actual_upcoming['Date'] = pd.to_datetime(actual_upcoming['Date'].apply(lambda x: x.split()[0])).dt.date
 actual_upcoming.set_index('Date',drop=True,inplace=True)
@@ -143,8 +140,7 @@ plt.savefig('Actual vs Predicted 10 days stock price.png',dpi=600,bbox_inches='t
 plt.show()
 
 
-###
-
+# Visualizing Predictions
 prediction_df[['open','open_pred']].plot(figsize=(10,6))
 plt.xticks(rotation=45)
 plt.xlabel('Date',size=15)
@@ -168,7 +164,7 @@ plt.ylabel('Stock Price',size=15)
 plt.title('Actual vs Predicted for highest price',size=15)
 plt.show()
 
-# High
+# Visualizing High Prediction
 plt.figure(figsize=(15,5))
 plt.plot(train_prediction_df.index,train_prediction_df['high'], color='blue',label='Actual Stock Price')
 plt.plot(train_prediction_df.index,train_prediction_df['high_pred'], color='red', label='Predicted Stock Price')
@@ -183,27 +179,94 @@ plt.savefig('High prediction vs actual.png', dpi=600,bbox_inches='tight')
 plt.show()
 
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
 train_rmse = np.sqrt(mean_squared_error(train_prediction_df['high'], train_prediction_df['high_pred']))
 test_rmse = np.sqrt(mean_squared_error(prediction_df['high'], prediction_df['high_pred']))
 
-# Random Forest
 
+# Random Forest
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
 rf = RandomForestRegressor(n_estimators = 1000, random_state=0)
 
 X = df.drop('high',axis=1)
-y = df['high'].values
+y = df['high']
 
-X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=0)
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=0,shuffle=False)
 
 rf.fit(X_train,y_train)
 rf_pred = rf.predict(X_test)
 residuals = y_test - rf_pred
 
 np.sqrt(mean_squared_error(y_test, rf_pred)) # much lower
+r2_score(y_test, rf_pred)
 
+# Tuning
+from sklearn.model_selection import RandomizedSearchCV
+
+# Number of trees in random forest
+n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
+# Number of features to consider at every split
+max_features = ['auto', 'sqrt']
+# Maximum number of levels in tree
+max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
+max_depth.append(None)
+# Minimum number of samples required to split a node
+min_samples_split = [2, 5, 10]
+# Minimum number of samples required at each leaf node
+min_samples_leaf = [1, 2, 4]
+# Method of selecting samples for training each tree
+bootstrap = [True, False]# Create the random grid
+random_grid = {'n_estimators': n_estimators,
+               'max_features': max_features,
+               'max_depth': max_depth,
+               'min_samples_split': min_samples_split,
+               'min_samples_leaf': min_samples_leaf,
+               'bootstrap': bootstrap}
+
+# Use the random grid to search for best hyperparameters
+# First create the base model to tune
+rf = RandomForestRegressor()
+# Random search of parameters, using 3 fold cross validation, 
+# search across 100 different combinations, and use all available cores
+rf_random = RandomizedSearchCV(estimator = rf, param_distributions = random_grid, n_iter = 100, cv = 3, verbose=2, random_state=42, n_jobs = -1)# Fit the random search model
+rf_random.fit(X_train, y_train)
+
+rf_random.best_params_
+
+rf = RandomForestRegressor(n_estimators=1000,
+                           min_samples_split=2,
+                           min_samples_leaf=1,
+                           max_features='auto',
+                           max_depth=10,
+                           bootstrap=False)
+
+rf.fit(X_train,y_train)
+pred = rf.predict(X_test)
+
+np.sqrt(mean_squared_error(y_test, pred)) 
+r2_score(y_test, pred)
+
+rf_df = pd.DataFrame(data=y_test,index=y_test.index)
+pred_df = pd.DataFrame(data=pred,columns=['predicted_high'],index=y_test.index)
+rf_df = pd.concat([rf_df,pred_df],axis=1)
+
+
+## Visualizing RF Predicted vs Actual
+plt.figure(figsize=(15,5))
+plt.plot(rf_df.iloc[:,0],label='Actual High Price', color='blue')
+plt.plot(rf_df.iloc[:,1],label='Predicted High Price', color='red')
+plt.xlabel('Date',size=15)
+plt.ylabel('Stock Price',size=15)
+plt.xticks(rotation=45)
+plt.title('Actual vs Predicted High price (RF)',size=15)
+plt.legend()
+plt.savefig('Actual vs Predicted 10 stock price (RF).png',dpi=600,bbox_inches='tight')
+plt.show()
+
+
+## Residuals
 plt.figure(figsize=(15,5))
 plt.scatter(y_test, residuals, c=residuals, cmap='magma', edgecolors='black', linewidths=.1)
 plt.colorbar(label="Error", orientation="vertical")
@@ -214,106 +277,88 @@ plt.savefig('RF Residuals.png',dpi=600,bbox_inches='tight')
 plt.show()
 
 
-# Defining a function that takes a news headline and stock numbers as input and gives a high prediction
-# for the next day
+# Defining functions for both models #
 
-def StockModel(df_LSTM, target, lstm=False, dense_layer_lstm=0, scaling=False, columns=df_LSTM.columns):
-    if lstm == True:
-        from sklearn.preprocessing import MinMaxScaler
-        if scaling == True:
-            Ms = MinMaxScaler()
-            df_LSTM[df_LSTM.columns] = Ms.fit_transform(df_LSTM)
-            
-            training_size = round(len(df_LSTM) * 0.80)
-    
-            train_data = df_LSTM[:training_size]
-            test_data  = df_LSTM[training_size:]
-        else:
-            
-            training_size = round(len(df_LSTM) * 0.80)
-    
-            train_data = df_LSTM[:training_size]
-            test_data  = df_LSTM[training_size:]
-            
-        def create_sequence(dataset):
-            sequences = []
-            labels = []
-            start_idx = 0
-            
-            for stop_idx in range(50, len(dataset)):
-                sequences.append(dataset.iloc[start_idx:stop_idx])
-                labels.append(dataset.iloc[stop_idx])
-                start_idx += 1
-            return (np.array(sequences), np.array(labels))
-
-        train_seq, train_label = create_sequence(train_data)
-        test_seq, test_label = create_sequence(test_data)
-
-
-        from keras.models import Sequential
-        from keras.layers import Dense, Dropout, LSTM
-
-        model = Sequential()
-        model.add(LSTM(units=50, return_sequences=True, input_shape = (train_seq.shape[1], train_seq.shape[2])))
-
-        model.add(Dropout(0.1)) 
-        model.add(LSTM(units=50))
-
-        model.add(Dense(dense_layer_lstm))
-
-        model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error'])
-
-        model.summary()
-
-        model.fit(train_seq, train_label, epochs=40,validation_data=(test_seq, test_label), verbose=1)
-
-        test_predicted = model.predict(test_seq)
-        test_predicted[:5]
-
-        test_inverse_predicted = Ms.inverse_transform(test_predicted) # Inversing scaling on predicted data
-        test_inverse_predicted[:5]
-
-        train_predicted = model.predict(train_seq)
-        train_predicted[:5]
-        train_inverse_predicted = Ms.inverse_transform(train_predicted) 
-
-        prediction_df = pd.concat([df_LSTM.iloc[-test_predicted.shape[0]:].copy(),\
-                                  pd.DataFrame(test_inverse_predicted,columns=\
-                                               [i + '_pred' for i in columns],\
-                                                   index=df_LSTM.iloc[-test_predicted.shape[0]:].index)], axis=1)
-
-        prediction_df.iloc[:,range(len(columns))] = Ms.inverse_transform(df_LSTM.iloc[-test_predicted.shape[0]:]) # Inverse scaling
-            
-
-        train_prediction_df = pd.concat([df_LSTM[['open', 'low', 'close', 'high']].iloc[:train_predicted.shape[0]].copy(),\
-                                  pd.DataFrame(train_inverse_predicted[:,:],columns=\
-                                               ['open_pred','low_pred','close_pred','high_pred'],\
-                                                   index=df_LSTM.iloc[:train_predicted.shape[0]].index)], axis=1)
-
-        train_prediction_df.iloc[:,range(len(columns))] = Ms.inverse_transform(df_LSTM.iloc[:train_predicted.shape[0]]) # Inverse scaling
+def StockModelLSTM(df_LSTM, dense_layer_lstm=0, needs_scaling=False, columns=df_LSTM.columns):
+    from sklearn.preprocessing import MinMaxScaler
+    if needs_scaling == True:
+        Ms = MinMaxScaler()
+        df_LSTM[df_LSTM.columns] = Ms.fit_transform(df_LSTM)
         
-        train_rmse = np.sqrt(mean_squared_error(train_prediction_df['high'], train_prediction_df['high_pred']))
-        test_rmse = np.sqrt(mean_squared_error(prediction_df['high'], prediction_df['high_pred']))
-        print(f"Train RMSE: {train_rmse}")
-        print(f"Test RMSE: {test_rmse}")
-        
+        training_size = round(len(df_LSTM) * 0.80)
+
+        train_data = df_LSTM[:training_size]
+        test_data  = df_LSTM[training_size:]
     else:
-        from sklearn.ensemble import RandomForestRegressor
-        from sklearn.model_selection import train_test_split
+        
+        training_size = round(len(df_LSTM) * 0.80)
 
-        rf = RandomForestRegressor(n_estimators = 1000, random_state=0)
+        train_data = df_LSTM[:training_size]
+        test_data  = df_LSTM[training_size:]
+        
+    def create_sequence(dataset):
+        sequences = []
+        labels = []
+        start_idx = 0
+        
+        for stop_idx in range(50, len(dataset)):
+            sequences.append(dataset.iloc[start_idx:stop_idx])
+            labels.append(dataset.iloc[stop_idx])
+            start_idx += 1
+        return (np.array(sequences), np.array(labels))
 
-        X = df_LSTM.drop(target,axis=1)
-        y = df_LSTM[target].values
+    train_seq, train_label = create_sequence(train_data)
+    test_seq, test_label = create_sequence(test_data)
 
-        X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=0)
 
-        rf.fit(X_train,y_train)
-        rf_pred = rf.predict(X_test)
+    from keras.models import Sequential
+    from keras.layers import Dense, Dropout, LSTM
 
-        print(f"Mean Root Squared Error: {np.sqrt(mean_squared_error(y_test, rf_pred))}")
-                
+    model = Sequential()
+    model.add(LSTM(units=50, return_sequences=True, input_shape = (train_seq.shape[1], train_seq.shape[2])))
+
+    model.add(Dropout(0.1)) 
+    model.add(LSTM(units=50))
+
+    model.add(Dense(dense_layer_lstm))
+
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error'])
+
+    model.summary()
+
+    model.fit(train_seq, train_label, epochs=40,validation_data=(test_seq, test_label), verbose=1)
+
+    test_predicted = model.predict(test_seq)
+    test_predicted[:5]
+
+    test_inverse_predicted = Ms.inverse_transform(test_predicted) # Inversing scaling on predicted data
+    test_inverse_predicted[:5]
+
+    train_predicted = model.predict(train_seq)
+    train_predicted[:5]
+    train_inverse_predicted = Ms.inverse_transform(train_predicted) 
+
+    prediction_df = pd.concat([df_LSTM.iloc[-test_predicted.shape[0]:].copy(),\
+                              pd.DataFrame(test_inverse_predicted,columns=\
+                                           [i + '_pred' for i in columns],\
+                                               index=df_LSTM.iloc[-test_predicted.shape[0]:].index)], axis=1)
+
+    prediction_df.iloc[:,range(len(columns))] = Ms.inverse_transform(df_LSTM.iloc[-test_predicted.shape[0]:]) # Inverse scaling
+        
+
+    train_prediction_df = pd.concat([df_LSTM[['open', 'low', 'close', 'high']].iloc[:train_predicted.shape[0]].copy(),\
+                              pd.DataFrame(train_inverse_predicted[:,:],columns=\
+                                           ['open_pred','low_pred','close_pred','high_pred'],\
+                                               index=df_LSTM.iloc[:train_predicted.shape[0]].index)], axis=1)
+
+    train_prediction_df.iloc[:,range(len(columns))] = Ms.inverse_transform(df_LSTM.iloc[:train_predicted.shape[0]]) # Inverse scaling
     
-StockModel(df_LSTM,lstm=True,scaling=True,dense_layer_lstm=4,rf_target='high')
+    train_rmse = np.sqrt(mean_squared_error(train_prediction_df['high'], train_prediction_df['high_pred']))
+    test_rmse = np.sqrt(mean_squared_error(prediction_df['high'], prediction_df['high_pred']))
+    print(f"Train RMSE: {train_rmse}")
+    print(f"Test RMSE: {test_rmse}")    
+    
+StockModelLSTM(df_LSTM, needs_scaling=True, dense_layer_lstm=4) # works
 
 
+# Define for RF
