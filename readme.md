@@ -109,7 +109,7 @@ Here are the changes I made:
 - **Train RMSE**: 9.31
 - **Test RMSE:** 4.76
 
-![High prediction vs actual](https://user-images.githubusercontent.com/123200960/232308109-6e31308d-3c4d-47af-86f2-efa600b131ac.png)
+![High prediction vs actual](https://user-images.githubusercontent.com/123200960/232324264-bc4331bb-8993-4a2f-a408-7a7aeeb6b03b.png)
 
 - Before the break around 2019 is the train set, and after that is the test set.
 
@@ -127,14 +127,18 @@ Since the data was limited to 30 March 2022 only because of the news headlines d
 
 ### Random Forest Prediction
 
-Since my model also has to use the sentiment scoring that I performed for predictions, I have also made a Random Forest Regressor model. I have only evaluated it on one train and test set though, and have not tuned it. So the performance may be a rough estimate.
+Since my model also has to use the sentiment scoring that I performed for predictions, I have also made a Random Forest Regressor model. I have evaluated it on 3 fold cv, and have tuned it using RandomizedSearch.
 
 I have used the features `open`, `close`, `low`, `adj close`, 'volume' of the stock data, and 'neg', 'neu', 'pos' from the sentiment scoring as the independent variables and `high` as the target variable.
 
-RMSE: 0.97
+- **RMSE**: 30.8
+- **R2 Score**: 0.69
 
-![RF Residuals](https://user-images.githubusercontent.com/123200960/232308706-8d4138a0-21f9-4885-8617-b28564f5e17d.png)
+**Test set's Actual vs Predicted:**
 
+![Actual vs Predicted stock price (RF)](https://user-images.githubusercontent.com/123200960/232323527-4b5cc08c-6dc9-430e-8d81-fffa3327173b.png)
+
+- The model's predictions seem to flatline around March-April 2021.
 
 
 
