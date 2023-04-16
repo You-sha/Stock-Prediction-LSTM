@@ -117,7 +117,7 @@ Here are the changes I made:
 
 ![Upcoming 10 days stock price](https://user-images.githubusercontent.com/123200960/232316925-36d8dc71-97b1-4ff5-a1bf-bb954391cc5b.png)
 
-Since the data was limited to 30 March 2022 only because of the news headlines data; I had access to the actual stock price data for the days after that, and so I dedcided to compare my results with the actual price.
+Since the data was limited to 30 March 2022 only because of the news headlines data; I had access to the actual stock price data for the days after that, and so I decided to compare my results with the actual price.
 
 **Next 10 days - Predicted vs Actual:**
 
