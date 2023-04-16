@@ -1,4 +1,6 @@
 # Stock Prediction: LSTM & SA
+Author: Mohammad Yousha
+
 Predicting **Kanoria Chemicals** stock price using Long Short-Term Memory and Sentiment Analysis.
 
 **Progress:**
