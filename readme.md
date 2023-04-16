@@ -152,9 +152,6 @@ Still, it is best to try out different methods and find the best for yourself (a
 
 ## Conclusion
 
-I have made to tools to predict stock price; one that uses time-series data and the LSTM model, and another that uses sentiment scores from news headlines and the stock data with a Random Forest model.
-
-
-
-
-*(In progress)*
+I have made two tools to predict stock price:
+- One that uses time-series data and an LSTM model. 
+- Another that uses sentiment scores from news headlines combined with the stock data and a Random Forest model.
